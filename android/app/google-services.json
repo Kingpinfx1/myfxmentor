@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "217450074252",
+    "project_id": "myfxmentor-f84a7",
+    "storage_bucket": "myfxmentor-f84a7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:217450074252:android:1ec41f05e50716fbecaba9",
+        "android_client_info": {
+          "package_name": "com.example.myfxmentor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJdfYc-0Q-XGXWrhZW5i9CH2mjz1HWkSE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
