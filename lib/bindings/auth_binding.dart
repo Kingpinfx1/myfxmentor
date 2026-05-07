@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/home_controller.dart';
+import '../controllers/journal_controller.dart';
 import '../controllers/profile_controller.dart';
 import '../services/auth_service.dart';
 import '../services/trade_service.dart';
@@ -12,6 +13,7 @@ class AuthBinding extends Bindings {
     Get.put<AuthController>(AuthController(Get.find()), permanent: true);
     Get.put<TradeService>(TradeService(), permanent: true);
     Get.lazyPut<HomeController>(() => HomeController());
+    Get.put<JournalController>(JournalController(), permanent: true);
     Get.lazyPut<ProfileController>(() => ProfileController());
   }
 }
