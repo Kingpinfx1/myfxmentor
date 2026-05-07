@@ -6,6 +6,7 @@ import '../journal/journal_view.dart';
 import '../insights/insights_view.dart';
 import '../profile/profile_view.dart';
 import '../log_trade/log_trade_view.dart';
+import '../../controllers/log_trade_controller.dart';
 
 class ShellView extends StatefulWidget {
   const ShellView({super.key});
@@ -30,6 +31,7 @@ class _ShellViewState extends State<ShellView> {
       HapticFeedback.mediumImpact();
       Get.to(
         () => const LogTradeView(),
+        binding: LogTradeBinding(),
         transition: Transition.downToUp,
         fullscreenDialog: true,
       );

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
+import '../core/theme/app_colors.dart';
+import '../core/theme/app_text_styles.dart';
 import '../routes/app_routes.dart';
 
 class LoginView extends StatefulWidget {
@@ -14,8 +16,8 @@ class _LoginViewState extends State<LoginView> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
-
   final _auth = Get.find<AuthController>();
+  bool _obscure = true;
 
   @override
   void dispose() {
@@ -26,51 +28,54 @@ class _LoginViewState extends State<LoginView> {
 
   Future<void> _onLogin() async {
     if (!_formKey.currentState!.validate()) return;
-
     try {
       await _auth.login(_emailCtrl.text.trim(), _passwordCtrl.text);
-      // no navigation here. AuthGate will react.
     } catch (e) {
-      Get.snackbar(
-        'Login failed',
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar('Login failed', e.toString(), snackPosition: SnackPosition.BOTTOM, margin: const EdgeInsets.all(16));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Form(
             key: _formKey,
             child: Column(
               children: [
+                const Spacer(),
+                // Branding
+                Image.asset('assets/images/logo.png', width: 180, height: 180),
+                const SizedBox(height: 20),
+                Text('Welcome back', style: AppTextStyles.displayMedium),
+                const SizedBox(height: 8),
+                Text('Sign in to your account', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+                const SizedBox(height: 36),
+                // Fields
                 TextFormField(
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                  ),
+                  decoration: const InputDecoration(labelText: 'Email'),
                   validator: (v) {
-                    final value = (v ?? '').trim();
-                    if (value.isEmpty) return 'Email is required';
-                    if (!value.contains('@')) return 'Enter a valid email';
+                    final val = (v ?? '').trim();
+                    if (val.isEmpty) return 'Email is required';
+                    if (!val.contains('@')) return 'Enter a valid email';
                     return null;
                   },
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _passwordCtrl,
-                  obscureText: true,
-                  decoration: const InputDecoration(
+                  obscureText: _obscure,
+                  decoration: InputDecoration(
                     labelText: 'Password',
-                    border: OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20),
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                    ),
                   ),
                   validator: (v) {
                     if ((v ?? '').isEmpty) return 'Password is required';
@@ -78,45 +83,38 @@ class _LoginViewState extends State<LoginView> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
-
-                Obx(() {
-                  final loading = _auth.isLoading.value;
-                  return SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: loading ? null : _onLogin,
-                      child: loading
-                          ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Login'),
-                    ),
-                  );
-                }),
-
                 const SizedBox(height: 8),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => Get.toNamed(AppRoutes.forgotPassword),
-                    child: const Text('Forgot password?'),
+                    child: Text('Forgot password?', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary)),
                   ),
                 ),
-
+                const SizedBox(height: 8),
+                Obx(() {
+                  final loading = _auth.isLoading.value;
+                  return ElevatedButton(
+                    onPressed: loading ? null : _onLogin,
+                    child: loading
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2))
+                        : const Text('Sign In'),
+                  );
+                }),
                 const Spacer(),
+                // Bottom
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("Don't have an account? "),
+                    Text("Don't have an account? ", style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
                     TextButton(
                       onPressed: () => Get.toNamed(AppRoutes.register),
-                      child: const Text('Register'),
+                      style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                      child: Text('Register', style: AppTextStyles.labelLarge),
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
               ],
             ),
           ),

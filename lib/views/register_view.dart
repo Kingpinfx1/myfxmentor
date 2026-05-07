@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
+import '../core/theme/app_colors.dart';
+import '../core/theme/app_text_styles.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -14,8 +16,9 @@ class _RegisterViewState extends State<RegisterView> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
-
   final _auth = Get.find<AuthController>();
+  bool _obscurePass = true;
+  bool _obscureConfirm = true;
 
   @override
   void dispose() {
@@ -27,52 +30,55 @@ class _RegisterViewState extends State<RegisterView> {
 
   Future<void> _onRegister() async {
     if (!_formKey.currentState!.validate()) return;
-
     try {
       await _auth.register(_emailCtrl.text.trim(), _passCtrl.text);
-      // AuthGate will take you to Home automatically
-      Get.back(); // optional: closes register screen
+      Get.back();
     } catch (e) {
-      Get.snackbar(
-        'Registration failed',
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar('Registration failed', e.toString(), snackPosition: SnackPosition.BOTTOM, margin: const EdgeInsets.all(16));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Register')),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Form(
             key: _formKey,
             child: Column(
               children: [
+                const Spacer(),
+                // Branding
+                Image.asset('assets/images/logo.png', width: 180, height: 180),
+                const SizedBox(height: 20),
+                Text('Create account', style: AppTextStyles.displayMedium),
+                const SizedBox(height: 8),
+                Text('Start tracking your discipline', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+                const SizedBox(height: 36),
+                // Fields
                 TextFormField(
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                  ),
+                  decoration: const InputDecoration(labelText: 'Email'),
                   validator: (v) {
-                    final value = (v ?? '').trim();
-                    if (value.isEmpty) return 'Email is required';
-                    if (!value.contains('@')) return 'Enter a valid email';
+                    final val = (v ?? '').trim();
+                    if (val.isEmpty) return 'Email is required';
+                    if (!val.contains('@')) return 'Enter a valid email';
                     return null;
                   },
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _passCtrl,
-                  obscureText: true,
-                  decoration: const InputDecoration(
+                  obscureText: _obscurePass,
+                  decoration: InputDecoration(
                     labelText: 'Password',
-                    border: OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscurePass ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20),
+                      onPressed: () => setState(() => _obscurePass = !_obscurePass),
+                    ),
                   ),
                   validator: (v) {
                     if ((v ?? '').isEmpty) return 'Password is required';
@@ -83,10 +89,13 @@ class _RegisterViewState extends State<RegisterView> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _confirmCtrl,
-                  obscureText: true,
-                  decoration: const InputDecoration(
+                  obscureText: _obscureConfirm,
+                  decoration: InputDecoration(
                     labelText: 'Confirm password',
-                    border: OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscureConfirm ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20),
+                      onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                    ),
                   ),
                   validator: (v) {
                     if ((v ?? '').isEmpty) return 'Confirm your password';
@@ -94,23 +103,30 @@ class _RegisterViewState extends State<RegisterView> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
                 Obx(() {
                   final loading = _auth.isLoading.value;
-                  return SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: loading ? null : _onRegister,
-                      child: loading
-                          ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Create account'),
-                    ),
+                  return ElevatedButton(
+                    onPressed: loading ? null : _onRegister,
+                    child: loading
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2))
+                        : const Text('Create Account'),
                   );
                 }),
+                const Spacer(),
+                // Bottom
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Already have an account? ', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+                    TextButton(
+                      onPressed: Get.back,
+                      style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                      child: Text('Sign In', style: AppTextStyles.labelLarge),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
               ],
             ),
           ),
