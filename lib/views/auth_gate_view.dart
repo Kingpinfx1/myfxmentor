@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import 'login_view.dart';
-import 'home_view.dart';
+import 'shell/shell_view.dart';
 
 class AuthGateView extends StatelessWidget {
   const AuthGateView({super.key});
@@ -13,8 +13,8 @@ class AuthGateView extends StatelessWidget {
 
     return Obx(() {
       final u = auth.user.value;
-      if (u == null) return LoginView();
-      return HomeView();
+      if (u == null) return const LoginView();
+      return const ShellView();
     });
   }
 }
