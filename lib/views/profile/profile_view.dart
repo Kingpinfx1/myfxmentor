@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/profile_controller.dart';
 import '../../controllers/home_controller.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../services/premium_service.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -90,6 +92,18 @@ class ProfileView extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+              if (kDebugMode)
+                Obx(() {
+                  final premium = Get.find<PremiumService>();
+                  return SwitchListTile(
+                    title: const Text('DEV: Premium unlocked'),
+                    subtitle: const Text('Debug only — hidden in release builds'),
+                    value: premium.isPremium.value,
+                    onChanged: (_) => premium.togglePremium(),
+                    contentPadding: EdgeInsets.zero,
+                  );
+                }),
+              const SizedBox(height: 8),
               Center(
                 child: Text('MyFX Mentor v1.0', style: AppTextStyles.bodySmall),
               ),

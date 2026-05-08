@@ -236,6 +236,11 @@ class _Step2Result extends StatelessWidget {
               )),
           const SizedBox(height: 24),
           Text('Result in R', style: AppTextStyles.titleSmall),
+          const SizedBox(height: 6),
+          Text(
+            'Enter how many times your risk you made or lost.\nWin: risked \$100, won \$200 → enter 2\nLoss: risked \$100, lost \$100 → enter 1',
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+          ),
           const SizedBox(height: 12),
           Obx(() => TextField(
                 controller: c.resultController,

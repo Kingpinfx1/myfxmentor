@@ -14,6 +14,7 @@ class Trade {
   final TradeEmotion emotion;
   final TradeChecklist checklist;
   final DateTime timestamp;
+  final String? aiReview;
 
   const Trade({
     required this.id,
@@ -26,6 +27,7 @@ class Trade {
     required this.emotion,
     required this.checklist,
     required this.timestamp,
+    this.aiReview,
   });
 
   bool get isProfit => result >= 0;
@@ -43,6 +45,7 @@ class Trade {
       emotion: TradeEmotion.fromString(data['emotion'] as String),
       checklist: TradeChecklist.fromMap(data),
       timestamp: (data['timestamp'] as Timestamp).toDate(),
+      aiReview: data['aiReview'] as String?,
     );
   }
 

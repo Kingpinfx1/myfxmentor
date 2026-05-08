@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:uuid/uuid.dart';
@@ -6,6 +7,8 @@ import '../domain/models/trade_direction.dart';
 import '../domain/models/trade_emotion.dart';
 import '../domain/models/trade_checklist.dart';
 import '../services/trade_service.dart';
+import '../services/premium_service.dart';
+import 'insights_controller.dart';
 
 class LogTradeController extends GetxController {
   static const commonPairs = ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD', 'USDCAD', 'AUDUSD', 'GBPJPY'];
@@ -128,7 +131,22 @@ class LogTradeController extends GetxController {
         ),
         timestamp: DateTime.now(),
       );
-      await Get.find<TradeService>().addTrade(trade);
+      final tradeService = Get.find<TradeService>();
+      await tradeService.addTrade(trade);
+
+      if (Get.find<PremiumService>().isPremium.value) {
+        final insights = Get.find<InsightsController>();
+        unawaited(tradeService.requestCoachingReview(stats: {
+          'totalTrades': insights.totalTrades,
+          'winRate': (insights.winRate * 100).round(),
+          'disciplineScore': (insights.disciplineScore * 100).round(),
+          'winRateByEmotion': insights.winRateByEmotion
+              .map((k, v) => MapEntry(k.name, (v * 100).round())),
+          'winRateByPair': insights.winRateByPair
+              .map((k, v) => MapEntry(k, (v * 100).round())),
+        }));
+      }
+
       Get.back();
       Get.snackbar(
         'Trade Logged',

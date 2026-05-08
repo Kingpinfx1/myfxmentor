@@ -6,7 +6,10 @@ import '../journal/journal_view.dart';
 import '../insights/insights_view.dart';
 import '../profile/profile_view.dart';
 import '../log_trade/log_trade_view.dart';
+import '../common/paywall_sheet.dart';
+import '../../controllers/journal_controller.dart';
 import '../../controllers/log_trade_controller.dart';
+import '../../services/premium_service.dart';
 
 class ShellView extends StatefulWidget {
   const ShellView({super.key});
@@ -27,8 +30,13 @@ class _ShellViewState extends State<ShellView> {
 
   void _onTap(int index) {
     if (index == 1) {
-      // Log Trade — opens modal, does not switch tab
       HapticFeedback.mediumImpact();
+      final premium = Get.find<PremiumService>();
+      final journal = Get.find<JournalController>();
+      if (!premium.isPremium.value && journal.trades.length >= 10) {
+        PaywallSheet.showAsModal(context);
+        return;
+      }
       Get.to(
         () => const LogTradeView(),
         binding: LogTradeBinding(),

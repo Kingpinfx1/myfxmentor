@@ -6,6 +6,8 @@ import '../../domain/models/trade_model.dart';
 import '../../domain/models/trade_direction.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../services/premium_service.dart';
+import '../common/paywall_sheet.dart';
 
 class JournalView extends StatelessWidget {
   const JournalView({super.key});
@@ -21,18 +23,21 @@ class JournalView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
               child: Text('Journal', style: AppTextStyles.displayMedium),
             ),
+            _FilterBar(c: c),
             Expanded(
               child: Obx(() {
                 if (c.trades.isEmpty) return const _EmptyState();
+                final filtered = c.filteredTrades;
+                if (filtered.isEmpty) return _FilteredEmptyState(c: c);
                 return ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                  itemCount: c.trades.length,
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                  itemCount: filtered.length,
                   itemBuilder: (_, i) => _TradeCard(
-                    trade: c.trades[i],
-                    onTap: () => _openDetail(c.trades[i], c),
+                    trade: filtered[i],
+                    onTap: () => _openDetail(filtered[i], c),
                   ),
                 );
               }),
@@ -49,6 +54,299 @@ class JournalView extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _TradeDetail(trade: trade, c: c),
+    );
+  }
+}
+
+// ─── Filter Bar ───────────────────────────────────────────────────────────────
+
+class _FilterBar extends StatelessWidget {
+  const _FilterBar({required this.c});
+  final JournalController c;
+
+  @override
+  Widget build(BuildContext context) {
+    final isPremium = Get.find<PremiumService>().isPremium.value;
+
+    if (!isPremium) {
+      return GestureDetector(
+        onTap: () => PaywallSheet.showAsModal(context),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _LockedChip('Date'),
+                const SizedBox(width: 8),
+                _LockedChip('Direction'),
+                const SizedBox(width: 8),
+                _LockedChip('Result'),
+                const SizedBox(width: 8),
+                _LockedChip('Pair'),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Obx(() => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                // Date filter
+                _FilterChip(
+                  label: _dateLabel(c.filterDate.value),
+                  isActive: c.filterDate.value != 'all',
+                  onTap: () => _showDatePicker(context, c),
+                ),
+                const SizedBox(width: 8),
+                // Direction filter
+                _FilterChip(
+                  label: _directionLabel(c.filterDirection.value),
+                  isActive: c.filterDirection.value != 'all',
+                  onTap: () => _showDirectionPicker(context, c),
+                ),
+                const SizedBox(width: 8),
+                // Result filter
+                _FilterChip(
+                  label: _resultLabel(c.filterResult.value),
+                  isActive: c.filterResult.value != 'all',
+                  onTap: () => _showResultPicker(context, c),
+                ),
+                const SizedBox(width: 8),
+                // Pair filter
+                _FilterChip(
+                  label: c.filterPair.value.isEmpty ? 'Pair' : c.filterPair.value,
+                  isActive: c.filterPair.value.isNotEmpty,
+                  onTap: () => _showPairPicker(context, c),
+                ),
+              ],
+            ),
+          ),
+        ));
+  }
+
+  String _dateLabel(String v) {
+    switch (v) {
+      case 'week': return 'This Week';
+      case 'month': return 'This Month';
+      case '30days': return 'Last 30 Days';
+      default: return 'Date';
+    }
+  }
+
+  String _directionLabel(String v) {
+    switch (v) {
+      case 'buy': return 'Buy';
+      case 'sell': return 'Sell';
+      default: return 'Direction';
+    }
+  }
+
+  String _resultLabel(String v) {
+    switch (v) {
+      case 'wins': return 'Wins';
+      case 'losses': return 'Losses';
+      default: return 'Result';
+    }
+  }
+
+  void _showDatePicker(BuildContext ctx, JournalController c) {
+    _showPickerSheet(
+      ctx,
+      title: 'Date Range',
+      options: const [
+        ('All Time', 'all'),
+        ('This Week', 'week'),
+        ('This Month', 'month'),
+        ('Last 30 Days', '30days'),
+      ],
+      current: c.filterDate.value,
+      onSelect: (v) => c.filterDate.value = v,
+    );
+  }
+
+  void _showDirectionPicker(BuildContext ctx, JournalController c) {
+    _showPickerSheet(
+      ctx,
+      title: 'Direction',
+      options: const [
+        ('All', 'all'),
+        ('Buy', 'buy'),
+        ('Sell', 'sell'),
+      ],
+      current: c.filterDirection.value,
+      onSelect: (v) => c.filterDirection.value = v,
+    );
+  }
+
+  void _showResultPicker(BuildContext ctx, JournalController c) {
+    _showPickerSheet(
+      ctx,
+      title: 'Result',
+      options: const [
+        ('All', 'all'),
+        ('Wins Only', 'wins'),
+        ('Losses Only', 'losses'),
+      ],
+      current: c.filterResult.value,
+      onSelect: (v) => c.filterResult.value = v,
+    );
+  }
+
+  void _showPairPicker(BuildContext ctx, JournalController c) {
+    final pairs = c.uniquePairs;
+    _showPickerSheet(
+      ctx,
+      title: 'Pair',
+      options: [('All Pairs', ''), ...pairs.map((p) => (p, p))],
+      current: c.filterPair.value,
+      onSelect: (v) => c.filterPair.value = v,
+    );
+  }
+
+  void _showPickerSheet(
+    BuildContext ctx, {
+    required String title,
+    required List<(String, String)> options,
+    required String current,
+    required void Function(String) onSelect,
+  }) {
+    showModalBottomSheet(
+      context: ctx,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(title, style: AppTextStyles.titleMedium),
+            ),
+            const SizedBox(height: 8),
+            ...options.map((opt) {
+              final isSelected = opt.$2 == current;
+              return ListTile(
+                title: Text(opt.$1, style: AppTextStyles.bodyMedium),
+                trailing: isSelected
+                    ? const Icon(Icons.check_rounded, size: 20)
+                    : null,
+                onTap: () {
+                  onSelect(opt.$2);
+                  Navigator.pop(ctx);
+                },
+              );
+            }),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({required this.label, required this.isActive, required this.onTap});
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.textPrimary : AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isActive ? AppColors.textPrimary : AppColors.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isActive ? Colors.white : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 16,
+              color: isActive ? Colors.white : AppColors.textTertiary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LockedChip extends StatelessWidget {
+  const _LockedChip(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textTertiary)),
+          const SizedBox(width: 4),
+          const Icon(Icons.lock_outline, size: 13, color: AppColors.textTertiary),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Filtered Empty State ─────────────────────────────────────────────────────
+
+class _FilteredEmptyState extends StatelessWidget {
+  const _FilteredEmptyState({required this.c});
+  final JournalController c;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.filter_list_off_rounded, size: 40, color: AppColors.textTertiary),
+          const SizedBox(height: 12),
+          Text('No trades match your filters', style: AppTextStyles.titleMedium),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: c.clearFilters,
+            child: const Text('Clear filters'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -82,7 +380,6 @@ class _TradeCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Direction badge
             Container(
               width: 48,
               height: 48,
@@ -98,7 +395,6 @@ class _TradeCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            // Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,7 +415,6 @@ class _TradeCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            // Result + discipline
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -168,7 +463,6 @@ class _TradeDetail extends StatelessWidget {
         ),
         child: Column(
           children: [
-            // Handle
             const SizedBox(height: 12),
             Container(
               width: 40,
@@ -176,7 +470,6 @@ class _TradeDetail extends StatelessWidget {
               decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
             ),
             const SizedBox(height: 16),
-            // Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
@@ -203,13 +496,11 @@ class _TradeDetail extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Divider(height: 1),
-            // Content
             Expanded(
               child: ListView(
                 controller: scrollController,
                 padding: const EdgeInsets.all(20),
                 children: [
-                  // Result hero
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 20),
@@ -229,19 +520,16 @@ class _TradeDetail extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // Trade details
                   _SectionTitle('Trade Details'),
                   const SizedBox(height: 12),
                   _DetailCard(children: [
-                    _DetailRow('Direction', trade.direction.label,
-                        valueColor: dirColor),
+                    _DetailRow('Direction', trade.direction.label, valueColor: dirColor),
                     const Divider(height: 1),
                     _DetailRow('Lot Size', trade.lotSize.toString()),
                     const Divider(height: 1),
                     _DetailRow('Risk', '${trade.riskPercent.toStringAsFixed(1)}%'),
                   ]),
                   const SizedBox(height: 20),
-                  // Emotion & Reason
                   _SectionTitle('Mindset'),
                   const SizedBox(height: 12),
                   _DetailCard(children: [
@@ -249,18 +537,19 @@ class _TradeDetail extends StatelessWidget {
                     const Divider(height: 1),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      child: Column(
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Reason', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
-                          const SizedBox(height: 6),
-                          Text(trade.reason, style: AppTextStyles.bodyMedium),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(trade.reason, style: AppTextStyles.bodyMedium, textAlign: TextAlign.right),
+                          ),
                         ],
                       ),
                     ),
                   ]),
                   const SizedBox(height: 20),
-                  // Checklist
                   _SectionTitle('Checklist'),
                   const SizedBox(height: 12),
                   _DetailCard(children: [
