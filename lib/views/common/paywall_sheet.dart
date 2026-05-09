@@ -46,9 +46,9 @@ class _PaywallContent extends StatefulWidget {
 class _PaywallContentState extends State<_PaywallContent> {
   bool _isYearly = true;
 
-  String get _price => _isYearly ? '\$39.99' : '\$4.99';
+  String get _price => _isYearly ? '\$59.99' : '\$9.99';
   String get _period => _isYearly ? '/ year' : '/ month';
-  String get _equivalent => _isYearly ? '\$3.33 / mo — save 33%' : 'Billed monthly';
+  String get _equivalent => _isYearly ? '\$5.00 / mo — save 50%' : 'Billed monthly';
 
   void _onUpgrade() {
     if (widget.isModal) Get.back();
@@ -93,12 +93,12 @@ class _PaywallContentState extends State<_PaywallContent> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
-                _FeatureRow(Icons.auto_awesome_rounded, 'AI Trade Review', 'Get AI feedback on each trade you log.'),
+                _FeatureRow(Icons.auto_awesome_rounded, 'AI Coaching Summary', 'Get a personalised coaching breakdown of your overall trading patterns after every session.'),
                 _FeatureRow(Icons.all_inclusive_rounded, 'Unlimited Logging', 'Log every trade with no cap or restrictions.'),
-                _FeatureRow(Icons.bar_chart_rounded, 'Deep Analytics', 'Win rates by pair, session, and time period.'),
-                _FeatureRow(Icons.filter_list_rounded, 'Journal Filters', 'Filter trades by date, pair, direction, and result.'),
-                _FeatureRow(Icons.psychology_rounded, 'Mindset Insights', 'See how your emotions affect your P&L.'),
-                _FeatureRow(Icons.verified_rounded, 'Discipline Tracking', 'Measure the real cost of breaking your rules.'),
+                _FeatureRow(Icons.bar_chart_rounded, 'Deep Performance Analytics', 'Uncover your edge — win rates by pair, emotion, and discipline level.'),
+                _FeatureRow(Icons.filter_list_rounded, 'Smart Journal Filters', 'Slice your trade history by date, pair, direction, and outcome instantly.'),
+                _FeatureRow(Icons.psychology_rounded, 'Mindset vs Outcome', 'See exactly how your emotions are costing or earning you money.'),
+                _FeatureRow(Icons.verified_rounded, 'Discipline Impact', 'Quantify the real cost of breaking your rules — trade by trade.'),
               ],
             ),
           ),
