@@ -43,15 +43,15 @@ class _RegisterViewState extends State<RegisterView> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Form(
             key: _formKey,
             child: Column(
               children: [
-                const Spacer(),
+                const SizedBox(height: 48),
                 // Branding
-                Image.asset('assets/images/logo.png', width: 180, height: 180),
+                Image.asset('assets/images/logo.png', width: 140, height: 140),
                 const SizedBox(height: 20),
                 Text('Create account', style: AppTextStyles.displayMedium),
                 const SizedBox(height: 8),
@@ -113,7 +113,7 @@ class _RegisterViewState extends State<RegisterView> {
                         : const Text('Create Account'),
                   );
                 }),
-                const Spacer(),
+                const SizedBox(height: 24),
                 // Bottom
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

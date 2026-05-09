@@ -157,7 +157,7 @@ class _SummaryRow extends StatelessWidget {
           const SizedBox(width: 10),
           _SummaryChip(label: 'Win Rate', value: '${(c.winRate * 100).toStringAsFixed(0)}%'),
           const SizedBox(width: 10),
-          _SummaryChip(label: 'Discipline', value: '${(c.disciplineScore * 100).toStringAsFixed(0)}%'),
+          _SummaryChip(label: 'Disc.', value: '${(c.disciplineScore * 100).toStringAsFixed(0)}%'),
           const SizedBox(width: 10),
           _SummaryChip(label: 'Trades', value: '${c.totalTrades}'),
         ],
@@ -425,8 +425,8 @@ class _EmotionRow extends StatelessWidget {
           Text(emotion.emoji, style: const TextStyle(fontSize: 20)),
           const SizedBox(width: 10),
           SizedBox(
-            width: 76,
-            child: Text(emotion.label, style: AppTextStyles.bodyMedium),
+            width: 88,
+            child: Text(emotion.label, style: AppTextStyles.bodyMedium, overflow: TextOverflow.ellipsis),
           ),
           const SizedBox(width: 8),
           Expanded(

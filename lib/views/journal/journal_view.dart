@@ -66,32 +66,33 @@ class _FilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isPremium = Get.find<PremiumService>().isPremium.value;
+    return Obx(() {
+      final isPremium = Get.find<PremiumService>().isPremium.value;
 
-    if (!isPremium) {
-      return GestureDetector(
-        onTap: () => PaywallSheet.showAsModal(context),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _LockedChip('Date'),
-                const SizedBox(width: 8),
-                _LockedChip('Direction'),
-                const SizedBox(width: 8),
-                _LockedChip('Result'),
-                const SizedBox(width: 8),
-                _LockedChip('Pair'),
-              ],
+      if (!isPremium) {
+        return GestureDetector(
+          onTap: () => PaywallSheet.showAsModal(context),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _LockedChip('Date'),
+                  const SizedBox(width: 8),
+                  _LockedChip('Direction'),
+                  const SizedBox(width: 8),
+                  _LockedChip('Result'),
+                  const SizedBox(width: 8),
+                  _LockedChip('Pair'),
+                ],
+              ),
             ),
           ),
-        ),
-      );
-    }
+        );
+      }
 
-    return Obx(() => Padding(
+      return Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -127,7 +128,8 @@ class _FilterBar extends StatelessWidget {
               ],
             ),
           ),
-        ));
+        );
+    });
   }
 
   String _dateLabel(String v) {

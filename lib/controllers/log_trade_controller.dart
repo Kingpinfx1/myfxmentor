@@ -93,6 +93,7 @@ class LogTradeController extends GetxController {
 
   void nextStep() {
     if (!canProceed) return;
+    FocusManager.instance.primaryFocus?.unfocus();
     if (currentStep.value < 3) {
       currentStep.value++;
       pageController.nextPage(duration: const Duration(milliseconds: 320), curve: Curves.easeInOut);
@@ -102,6 +103,7 @@ class LogTradeController extends GetxController {
   }
 
   void previousStep() {
+    FocusManager.instance.primaryFocus?.unfocus();
     if (currentStep.value > 0) {
       currentStep.value--;
       pageController.previousPage(duration: const Duration(milliseconds: 320), curve: Curves.easeInOut);

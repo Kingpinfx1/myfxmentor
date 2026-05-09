@@ -38,15 +38,15 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Form(
             key: _formKey,
             child: Column(
               children: [
-                const Spacer(),
+                const SizedBox(height: 48),
                 // Branding
-                Image.asset('assets/images/logo.png', width: 180, height: 180),
+                Image.asset('assets/images/logo.png', width: 140, height: 140),
                 const SizedBox(height: 20),
                 Text('Reset password', style: AppTextStyles.displayMedium),
                 const SizedBox(height: 8),
@@ -80,7 +80,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                     child: Text('Back to Sign In', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 24),
               ],
             ),
           ),
