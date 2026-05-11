@@ -81,4 +81,72 @@ class InsightsController extends GetxController {
         (i.toDouble(), cumulative += sorted[i].result),
     ];
   }
+
+  double get averageWin {
+    final wins = trades.where((t) => t.isProfit).toList();
+    if (wins.isEmpty) return 0;
+    return wins.fold(0.0, (s, t) => s + t.result) / wins.length;
+  }
+
+  double get averageLoss {
+    final losses = trades.where((t) => !t.isProfit).toList();
+    if (losses.isEmpty) return 0;
+    return losses.fold(0.0, (s, t) => s + t.result.abs()) / losses.length;
+  }
+
+  /// null when either side has no data yet.
+  double? get rewardRiskRatio {
+    final w = averageWin;
+    final l = averageLoss;
+    if (w == 0 || l == 0) return null;
+    return w / l;
+  }
+
+  /// Positive = win streak length, negative = loss streak length, 0 = no trades.
+  int get currentStreak {
+    if (trades.isEmpty) return 0;
+    final sorted = [...trades]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    final isWin = sorted.last.isProfit;
+    int count = 0;
+    for (int i = sorted.length - 1; i >= 0; i--) {
+      if (sorted[i].isProfit == isWin) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    return isWin ? count : -count;
+  }
+
+  int get bestWinStreak {
+    if (trades.isEmpty) return 0;
+    final sorted = [...trades]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    int best = 0, current = 0;
+    for (final t in sorted) {
+      current = t.isProfit ? current + 1 : 0;
+      if (current > best) best = current;
+    }
+    return best;
+  }
+
+  int get bestLossStreak {
+    if (trades.isEmpty) return 0;
+    final sorted = [...trades]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    int best = 0, current = 0;
+    for (final t in sorted) {
+      current = !t.isProfit ? current + 1 : 0;
+      if (current > best) best = current;
+    }
+    return best;
+  }
+
+  /// Sum of results per calendar day. Keys are normalised to midnight.
+  Map<DateTime, double> get dailyPnl {
+    final result = <DateTime, double>{};
+    for (final t in trades) {
+      final day = DateTime(t.timestamp.year, t.timestamp.month, t.timestamp.day);
+      result[day] = (result[day] ?? 0) + t.result;
+    }
+    return result;
+  }
 }

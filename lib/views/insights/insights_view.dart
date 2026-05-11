@@ -32,10 +32,14 @@ class InsightsView extends StatelessWidget {
               ),
               SliverToBoxAdapter(child: _AiCoachingCard(c: c)),
               SliverToBoxAdapter(child: _SummaryRow(c: c)),
+              SliverToBoxAdapter(child: _RRRow(c: c)),
+              SliverToBoxAdapter(child: _StreakCard(c: c)),
               SliverToBoxAdapter(child: _SectionHeader('Pair Performance')),
               SliverToBoxAdapter(child: _PairBarChart(c: c)),
               SliverToBoxAdapter(child: _SectionHeader('Result Over Time')),
               SliverToBoxAdapter(child: _CumulativeLineChart(c: c)),
+              SliverToBoxAdapter(child: _SectionHeader('Monthly P&L')),
+              SliverToBoxAdapter(child: _MonthlyCalendar(c: c)),
               SliverToBoxAdapter(child: _SectionHeader('Mindset vs Outcome')),
               SliverToBoxAdapter(child: _EmotionBreakdown(c: c)),
               SliverToBoxAdapter(child: _SectionHeader('Discipline Impact')),
@@ -542,6 +546,361 @@ class _DisciplineCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(label, style: AppTextStyles.bodySmall.copyWith(color: color.withValues(alpha: 0.7))),
         ],
+      ),
+    );
+  }
+}
+
+// ─── R:R Row ──────────────────────────────────────────────────────────────────
+
+class _RRRow extends StatelessWidget {
+  const _RRRow({required this.c});
+  final InsightsController c;
+
+  @override
+  Widget build(BuildContext context) {
+    final rr = c.rewardRiskRatio;
+    final avgWin = c.averageWin;
+    final avgLoss = c.averageLoss;
+
+    final rrText = rr == null ? '—' : '1 : ${rr.toStringAsFixed(2)}';
+    final rrColor = rr == null
+        ? AppColors.textTertiary
+        : rr >= 1.5
+            ? AppColors.profit
+            : rr >= 1.0
+                ? AppColors.warning
+                : AppColors.loss;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+      child: Row(
+        children: [
+          _SummaryChip(
+            label: 'Avg Win',
+            value: avgWin == 0 ? '—' : '+${avgWin.toStringAsFixed(2)}R',
+            valueColor: avgWin == 0 ? null : AppColors.profit,
+          ),
+          const SizedBox(width: 10),
+          _SummaryChip(
+            label: 'Avg Loss',
+            value: avgLoss == 0 ? '—' : '-${avgLoss.toStringAsFixed(2)}R',
+            valueColor: avgLoss == 0 ? null : AppColors.loss,
+          ),
+          const SizedBox(width: 10),
+          _SummaryChip(
+            label: 'R:R Ratio',
+            value: rrText,
+            valueColor: rrColor,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Streak Card ──────────────────────────────────────────────────────────────
+
+class _StreakCard extends StatelessWidget {
+  const _StreakCard({required this.c});
+  final InsightsController c;
+
+  @override
+  Widget build(BuildContext context) {
+    final streak = c.currentStreak;
+    final isWin = streak > 0;
+    final isLoss = streak < 0;
+    final streakAbs = streak.abs();
+    final bestWin = c.bestWinStreak;
+    final bestLoss = c.bestLossStreak;
+    final tiltRisk = streak <= -3;
+
+    final Color streakColor = isWin ? AppColors.profit : isLoss ? AppColors.loss : AppColors.textTertiary;
+    final Color streakBg = isWin ? AppColors.profitLight : isLoss ? AppColors.lossLight : AppColors.background;
+    final String emoji = isWin ? '🔥' : isLoss ? '❄️' : '—';
+    final String label = isWin ? 'Win Streak' : isLoss ? 'Loss Streak' : 'No Streak';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: streakBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: streakColor.withValues(alpha: streak == 0 ? 0.15 : 0.25)),
+          boxShadow: const [BoxShadow(color: AppColors.cardShadow, blurRadius: 8, offset: Offset(0, 2))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // Current streak
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        streak == 0 ? '—' : '$streakAbs',
+                        style: TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.w800,
+                          color: streakColor,
+                          letterSpacing: -1,
+                          height: 1,
+                        ),
+                      ),
+                      if (streak != 0) ...[
+                        const SizedBox(width: 8),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(emoji, style: const TextStyle(fontSize: 22)),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                // Tilt risk badge
+                if (tiltRisk)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: AppColors.loss,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.warning_rounded, color: Colors.white, size: 12),
+                        SizedBox(width: 4),
+                        Text('Tilt Risk', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: AppTextStyles.bodySmall.copyWith(color: streakColor.withValues(alpha: 0.8)),
+            ),
+            const SizedBox(height: 12),
+            // Personal bests row
+            Row(
+              children: [
+                _BestStat(label: 'Best Win Streak', value: bestWin, color: AppColors.profit),
+                const SizedBox(width: 8),
+                Container(width: 1, height: 28, color: streakColor.withValues(alpha: 0.15)),
+                const SizedBox(width: 8),
+                _BestStat(label: 'Best Loss Streak', value: bestLoss, color: AppColors.loss),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BestStat extends StatelessWidget {
+  const _BestStat({required this.label, required this.value, required this.color});
+  final String label;
+  final int value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$value',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: color, height: 1),
+        ),
+        Text(label, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+      ],
+    );
+  }
+}
+
+// ─── Monthly P&L Calendar ─────────────────────────────────────────────────────
+
+class _MonthlyCalendar extends StatefulWidget {
+  const _MonthlyCalendar({required this.c});
+  final InsightsController c;
+
+  @override
+  State<_MonthlyCalendar> createState() => _MonthlyCalendarState();
+}
+
+class _MonthlyCalendarState extends State<_MonthlyCalendar> {
+  late DateTime _month;
+
+  static const _dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  static const _monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _month = DateTime(now.year, now.month);
+  }
+
+  bool get _canGoNext {
+    final now = DateTime.now();
+    return _month.isBefore(DateTime(now.year, now.month));
+  }
+
+  void _prev() => setState(() => _month = DateTime(_month.year, _month.month - 1));
+  void _next() {
+    if (_canGoNext) setState(() => _month = DateTime(_month.year, _month.month + 1));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dailyPnl = widget.c.dailyPnl;
+    final firstDay = DateTime(_month.year, _month.month, 1);
+    final daysInMonth = DateTime(_month.year, _month.month + 1, 0).day;
+    final leadingBlanks = firstDay.weekday - 1; // Monday = 0 blanks
+    final today = DateTime.now();
+    final todayNorm = DateTime(today.year, today.month, today.day);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+          boxShadow: const [BoxShadow(color: AppColors.cardShadow, blurRadius: 8, offset: Offset(0, 2))],
+        ),
+        child: Column(
+          children: [
+            // Month navigation header
+            Row(
+              children: [
+                _NavButton(icon: Icons.chevron_left, onPressed: _prev),
+                Expanded(
+                  child: Text(
+                    '${_monthNames[_month.month - 1]} ${_month.year}',
+                    style: AppTextStyles.labelLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                _NavButton(
+                  icon: Icons.chevron_right,
+                  onPressed: _canGoNext ? _next : null,
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Day-of-week headers
+            Row(
+              children: _dayLabels
+                  .map((d) => Expanded(
+                        child: Text(
+                          d,
+                          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textTertiary),
+                          textAlign: TextAlign.center,
+                        ),
+                      ))
+                  .toList(),
+            ),
+            const SizedBox(height: 6),
+            // Calendar grid
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                childAspectRatio: 1,
+                mainAxisSpacing: 3,
+                crossAxisSpacing: 3,
+              ),
+              itemCount: leadingBlanks + daysInMonth,
+              itemBuilder: (_, index) {
+                if (index < leadingBlanks) return const SizedBox.shrink();
+
+                final day = index - leadingBlanks + 1;
+                final date = DateTime(_month.year, _month.month, day);
+                final pnl = dailyPnl[date];
+                final isToday = date == todayNorm;
+
+                final Color? bg = pnl == null
+                    ? null
+                    : pnl > 0
+                        ? AppColors.profitLight
+                        : AppColors.lossLight;
+                final Color textColor = pnl == null
+                    ? AppColors.textTertiary
+                    : pnl > 0
+                        ? AppColors.profit
+                        : AppColors.loss;
+
+                return Container(
+                  decoration: BoxDecoration(
+                    color: bg,
+                    borderRadius: BorderRadius.circular(7),
+                    border: isToday
+                        ? Border.all(color: AppColors.black, width: 1.5)
+                        : null,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '$day',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: pnl != null ? FontWeight.w700 : FontWeight.w400,
+                          color: textColor,
+                          height: 1.1,
+                        ),
+                      ),
+                      if (pnl != null)
+                        Text(
+                          '${pnl > 0 ? "+" : ""}${pnl.toStringAsFixed(1)}',
+                          style: TextStyle(
+                            fontSize: 7,
+                            color: textColor,
+                            fontWeight: FontWeight.w600,
+                            height: 1.2,
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavButton extends StatelessWidget {
+  const _NavButton({required this.icon, required this.onPressed});
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: 32,
+        height: 32,
+        alignment: Alignment.center,
+        child: Icon(
+          icon,
+          size: 20,
+          color: onPressed != null ? AppColors.textSecondary : AppColors.border,
+        ),
       ),
     );
   }
