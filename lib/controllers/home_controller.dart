@@ -45,4 +45,42 @@ class HomeController extends GetxController {
   }
 
   List<Trade> get recentTrades => trades.take(3).toList();
+
+  /// Positive = win streak length, negative = loss streak, 0 = no trades.
+  int get currentStreak {
+    if (trades.isEmpty) return 0;
+    final sorted = [...trades]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    final isWin = sorted.last.isProfit;
+    int count = 0;
+    for (int i = sorted.length - 1; i >= 0; i--) {
+      if (sorted[i].isProfit == isWin) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    return isWin ? count : -count;
+  }
+
+  int get bestWinStreak {
+    if (trades.isEmpty) return 0;
+    final sorted = [...trades]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    int best = 0, current = 0;
+    for (final t in sorted) {
+      current = t.isProfit ? current + 1 : 0;
+      if (current > best) best = current;
+    }
+    return best;
+  }
+
+  int get bestLossStreak {
+    if (trades.isEmpty) return 0;
+    final sorted = [...trades]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    int best = 0, current = 0;
+    for (final t in sorted) {
+      current = !t.isProfit ? current + 1 : 0;
+      if (current > best) best = current;
+    }
+    return best;
+  }
 }

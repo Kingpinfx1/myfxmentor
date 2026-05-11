@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/home_controller.dart';
+import '../../controllers/insights_controller.dart';
+import '../../services/premium_service.dart';
 import '../../domain/models/trade_model.dart';
 import '../../domain/models/trade_direction.dart';
 import '../../core/theme/app_colors.dart';
@@ -36,6 +38,7 @@ class _Content extends StatelessWidget {
         SliverToBoxAdapter(child: _Header(c: c)),
         SliverToBoxAdapter(child: _DisciplineCard(c: c)),
         SliverToBoxAdapter(child: _StatsRow(c: c)),
+        SliverToBoxAdapter(child: _StreakCard(c: c)),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
@@ -58,6 +61,94 @@ class _Header extends StatelessWidget {
   const _Header({required this.c});
   final HomeController c;
 
+  void _showCoachingSheet(BuildContext context) {
+    final insights = Get.find<InsightsController>();
+    final premium = Get.find<PremiumService>();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => Container(
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.black,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.auto_awesome_rounded, size: 18, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Text('AI Coaching', style: AppTextStyles.titleMedium),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Obx(() {
+              if (!premium.isPremium.value) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Upgrade to Pro to unlock personalised AI coaching after every trade session.',
+                      style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary, height: 1.6),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Get.back();
+                          Get.snackbar('Coming Soon', 'Payment will be available soon!');
+                        },
+                        child: const Text('Upgrade to Pro'),
+                      ),
+                    ),
+                  ],
+                );
+              }
+              final summary = insights.coachingSummary.value;
+              if (summary != null) {
+                return Text(summary, style: AppTextStyles.bodyMedium.copyWith(height: 1.6));
+              }
+              if (insights.trades.isNotEmpty) {
+                return Row(
+                  children: [
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(width: 12),
+                    Text('Analysing your trades…', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+                  ],
+                );
+              }
+              return Text(
+                'Log your first trade to get a personalised coaching summary.',
+                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+              );
+            }),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -75,15 +166,18 @@ class _Header extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
+          GestureDetector(
+            onTap: () => _showCoachingSheet(context),
+            child: Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Icon(Icons.auto_awesome_rounded, size: 20, color: AppColors.textSecondary),
             ),
-            child: const Icon(Icons.notifications_outlined, size: 20, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -301,6 +395,120 @@ class _TradeCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _StreakCard extends StatelessWidget {
+  const _StreakCard({required this.c});
+  final HomeController c;
+
+  @override
+  Widget build(BuildContext context) {
+    final streak = c.currentStreak;
+    final isWinStreak = streak > 0;
+    final streakColor = streak > 0
+        ? AppColors.profit
+        : streak < 0
+            ? AppColors.loss
+            : AppColors.textSecondary;
+    final streakLabel = streak > 0
+        ? 'win streak 🔥'
+        : streak < 0
+            ? 'loss streak ❄️'
+            : 'no streak yet';
+    final isTiltRisk = streak <= -3;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [BoxShadow(color: AppColors.cardShadow, blurRadius: 8, offset: Offset(0, 2))],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Current Streak', style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
+                const SizedBox(height: 6),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${streak.abs()}',
+                      style: TextStyle(
+                        fontSize: 42,
+                        fontWeight: FontWeight.w800,
+                        color: streakColor,
+                        letterSpacing: -1.5,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Text(streakLabel, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+                    ),
+                  ],
+                ),
+                if (isTiltRisk) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.loss.withValues(alpha: 0.10),
+                      border: Border.all(color: AppColors.loss.withValues(alpha: 0.30)),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.loss),
+                        const SizedBox(width: 4),
+                        Text('Tilt Risk', style: AppTextStyles.labelMedium.copyWith(color: AppColors.loss)),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _BestStat(label: 'Best win', value: '${c.bestWinStreak}'),
+              const SizedBox(height: 8),
+              _BestStat(label: 'Best loss', value: '${c.bestLossStreak}'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BestStat extends StatelessWidget {
+  const _BestStat({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(label, style: AppTextStyles.labelMedium.copyWith(color: AppColors.textSecondary)),
+        const SizedBox(height: 2),
+        Text(value, style: AppTextStyles.titleSmall),
+      ],
     );
   }
 }
