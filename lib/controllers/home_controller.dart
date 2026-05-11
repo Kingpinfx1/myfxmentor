@@ -44,6 +44,8 @@ class HomeController extends GetxController {
     return trades.map((t) => t.riskPercent).reduce((a, b) => a + b) / totalTrades;
   }
 
+  double get totalR => trades.fold(0.0, (sum, t) => sum + t.result);
+
   List<Trade> get recentTrades => trades.take(3).toList();
 
   /// Positive = win streak length, negative = loss streak, 0 = no trades.

@@ -36,7 +36,7 @@ class _Content extends StatelessWidget {
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(child: _Header(c: c)),
-        SliverToBoxAdapter(child: _DisciplineCard(c: c)),
+        SliverToBoxAdapter(child: _HeroCard(c: c)),
         SliverToBoxAdapter(child: _StatsRow(c: c)),
         SliverToBoxAdapter(child: _StreakCard(c: c)),
         SliverToBoxAdapter(
@@ -185,103 +185,110 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _DisciplineCard extends StatelessWidget {
-  const _DisciplineCard({required this.c});
+class _HeroCard extends StatelessWidget {
+  const _HeroCard({required this.c});
   final HomeController c;
 
   @override
   Widget build(BuildContext context) {
+    final totalR = c.totalR;
+    final rColor = totalR >= 0 ? AppColors.profit : AppColors.loss;
+    final sign = totalR >= 0 ? '+' : '-';
+    final abs = totalR.abs();
+    final rFormatted = abs == abs.roundToDouble() ? abs.toInt().toString() : abs.toStringAsFixed(1);
+    final rText = '$sign${rFormatted}R';
+
     final score = c.disciplineScore;
-    final percent = (score * 100).round();
-    final color = score >= 0.7 ? AppColors.profit : score >= 0.4 ? AppColors.warning : AppColors.loss;
-    final label = score >= 0.7 ? 'Strong discipline' : score >= 0.4 ? 'Needs improvement' : 'Low discipline';
+    final discColor = score >= 0.7 ? AppColors.profit : score >= 0.4 ? AppColors.warning : AppColors.loss;
+    final winColor = c.winRate >= 0.5 ? AppColors.profit : AppColors.loss;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.black,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [BoxShadow(color: AppColors.cardShadow, blurRadius: 8, offset: Offset(0, 2))],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Discipline Score', style: AppTextStyles.labelLarge.copyWith(color: Colors.white54)),
-                const SizedBox(height: 8),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '$percent',
-                      style: const TextStyle(
-                        fontSize: 52,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: -2,
-                        height: 1,
-                      ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 8),
-                      child: Text('%', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white70)),
-                    ),
-                  ],
+          Text('Total Performance', style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                rText,
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w800,
+                  color: rColor,
+                  letterSpacing: -2,
+                  height: 1,
                 ),
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: score,
-                    minHeight: 6,
-                    backgroundColor: Colors.white12,
-                    valueColor: AlwaysStoppedAnimation<Color>(color),
-                  ),
+              ),
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Icon(
+                  totalR >= 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                  size: 22,
+                  color: rColor,
                 ),
-                const SizedBox(height: 10),
-                Text(label, style: AppTextStyles.labelLarge.copyWith(color: color)),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Divider(color: AppColors.border, height: 1),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _MetricRow(
+                label: 'Win Rate',
+                value: '${(c.winRate * 100).toStringAsFixed(0)}%',
+                color: winColor,
+              ),
+              const SizedBox(width: 24),
+              _MetricRow(
+                label: 'Discipline',
+                value: '${(score * 100).toStringAsFixed(0)}%',
+                color: discColor,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: score,
+              minHeight: 5,
+              backgroundColor: AppColors.border,
+              valueColor: AlwaysStoppedAnimation<Color>(discColor),
             ),
           ),
-          const SizedBox(width: 20),
-          _ScoreRing(score: score, color: color),
         ],
       ),
     );
   }
 }
 
-class _ScoreRing extends StatelessWidget {
-  const _ScoreRing({required this.score, required this.color});
-  final double score;
+class _MetricRow extends StatelessWidget {
+  const _MetricRow({required this.label, required this.value, required this.color});
+  final String label;
+  final String value;
   final Color color;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 72,
-      height: 72,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          CircularProgressIndicator(
-            value: score,
-            strokeWidth: 6,
-            backgroundColor: Colors.white12,
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-            strokeCap: StrokeCap.round,
-          ),
-          Center(
-            child: Icon(
-              score >= 0.7 ? Icons.military_tech_rounded : Icons.trending_up_rounded,
-              color: color,
-              size: 28,
-            ),
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(value, style: AppTextStyles.titleMedium.copyWith(color: color)),
+        const SizedBox(height: 2),
+        Text(label, style: AppTextStyles.labelMedium.copyWith(color: AppColors.textSecondary)),
+      ],
     );
   }
 }
