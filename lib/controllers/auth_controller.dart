@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 
 class AuthController extends GetxController {
   final AuthService _service;
@@ -13,6 +14,11 @@ class AuthController extends GetxController {
   void onInit() {
     super.onInit();
     user.bindStream(_service.authStateChanges());
+    ever(user, (u) {
+      if (u != null) {
+        Get.find<NotificationService>().init(u.uid);
+      }
+    });
   }
 
   Future<void> login(String email, String password) async {
