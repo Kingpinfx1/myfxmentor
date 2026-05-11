@@ -45,6 +45,25 @@ class _PaywallContent extends StatefulWidget {
 
 class _PaywallContentState extends State<_PaywallContent> {
   bool _isYearly = true;
+  late final ScrollController _scrollController;
+  bool _showFade = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(() {
+      final atBottom = _scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 8;
+      if (atBottom == _showFade) setState(() => _showFade = !atBottom);
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   String get _price => _isYearly ? '\$59.99' : '\$9.99';
   String get _period => _isYearly ? '/ year' : '/ month';
@@ -66,41 +85,71 @@ class _PaywallContentState extends State<_PaywallContent> {
       children: [
         // ── Scrollable top section ──────────────────────────────
         Flexible(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-            child: Column(
-              children: [
-                if (widget.isModal) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                controller: _scrollController,
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                child: Column(
+                  children: [
+                    if (widget.isModal) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    Image.asset('assets/images/logo.png', width: 68, height: 68),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Unlock your full trading potential',
+                      style: AppTextStyles.titleMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Get unlimited access to all features',
+                      style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                    _FeatureRow(Icons.auto_awesome_rounded, 'AI Coaching Summary', 'Get a personalised coaching breakdown of your overall trading patterns after every session.'),
+                    _FeatureRow(Icons.all_inclusive_rounded, 'Unlimited Logging', 'Log every trade with no cap or restrictions.'),
+                    _FeatureRow(Icons.bar_chart_rounded, 'Deep Performance Analytics', 'Uncover your edge — win rates by pair, emotion, and discipline level.'),
+                    _FeatureRow(Icons.filter_list_rounded, 'Smart Journal Filters', 'Slice your trade history by date, pair, direction, and outcome instantly.'),
+                    _FeatureRow(Icons.psychology_rounded, 'Mindset vs Outcome', 'See exactly how your emotions are costing or earning you money.'),
+                    _FeatureRow(Icons.verified_rounded, 'Discipline Impact', 'Quantify the real cost of breaking your rules — trade by trade.'),
+                  ],
+                ),
+              ),
+              // Fade hint — disappears once user scrolls to the bottom
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: IgnorePointer(
+                  child: AnimatedOpacity(
+                    opacity: _showFade ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Container(
+                      height: 72,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            AppColors.surface.withValues(alpha: 0),
+                            AppColors.surface,
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ],
-                const SizedBox(height: 24),
-                Image.asset('assets/images/logo.png', width: 68, height: 68),
-                const SizedBox(height: 14),
-                Text(
-                  'Unlock your full trading potential',
-                  style: AppTextStyles.titleMedium,
-                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Get unlimited access to all features',
-                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                _FeatureRow(Icons.auto_awesome_rounded, 'AI Coaching Summary', 'Get a personalised coaching breakdown of your overall trading patterns after every session.'),
-                _FeatureRow(Icons.all_inclusive_rounded, 'Unlimited Logging', 'Log every trade with no cap or restrictions.'),
-                _FeatureRow(Icons.bar_chart_rounded, 'Deep Performance Analytics', 'Uncover your edge — win rates by pair, emotion, and discipline level.'),
-                _FeatureRow(Icons.filter_list_rounded, 'Smart Journal Filters', 'Slice your trade history by date, pair, direction, and outcome instantly.'),
-                _FeatureRow(Icons.psychology_rounded, 'Mindset vs Outcome', 'See exactly how your emotions are costing or earning you money.'),
-                _FeatureRow(Icons.verified_rounded, 'Discipline Impact', 'Quantify the real cost of breaking your rules — trade by trade.'),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
 
