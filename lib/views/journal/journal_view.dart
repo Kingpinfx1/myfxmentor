@@ -336,18 +336,44 @@ class _FilteredEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.filter_list_off_rounded, size: 40, color: AppColors.textTertiary),
-          const SizedBox(height: 12),
-          Text('No trades match your filters', style: AppTextStyles.titleMedium),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: c.clearFilters,
-            child: const Text('Clear filters'),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Icon(Icons.filter_list_off_rounded, size: 32, color: AppColors.textTertiary),
+            ),
+            const SizedBox(height: 20),
+            Text('No trades match your filters', style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
+            const SizedBox(height: 8),
+            Text(
+              'Try adjusting or clearing your filters to see your trades.',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton(
+                onPressed: c.clearFilters,
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.border),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                child: const Text('Clear filters', style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
