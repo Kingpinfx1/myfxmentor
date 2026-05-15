@@ -268,6 +268,11 @@ class _HeroCard extends StatelessWidget {
               valueColor: AlwaysStoppedAnimation<Color>(discColor),
             ),
           ),
+          const SizedBox(height: 8),
+          Text(
+            score >= 0.7 ? 'Strong discipline' : score >= 0.4 ? 'Needs improvement' : 'Low discipline',
+            style: AppTextStyles.labelMedium.copyWith(color: discColor),
+          ),
         ],
       ),
     );
