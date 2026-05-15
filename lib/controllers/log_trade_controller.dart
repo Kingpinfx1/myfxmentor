@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:uuid/uuid.dart';
+import 'package:in_app_review/in_app_review.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../domain/models/trade_model.dart';
 import '../domain/models/trade_direction.dart';
 import '../domain/models/trade_emotion.dart';
@@ -135,6 +137,7 @@ class LogTradeController extends GetxController {
       );
       final tradeService = Get.find<TradeService>();
       await tradeService.addTrade(trade);
+      unawaited(_maybeRequestReview());
 
       if (Get.find<PremiumService>().isPremium.value) {
         final insights = Get.find<InsightsController>();
@@ -167,6 +170,24 @@ class LogTradeController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  Future<void> _maybeRequestReview() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('review_prompted') ?? false) return;
+
+    final isPremium = Get.find<PremiumService>().isPremium.value;
+    final totalTrades = Get.find<InsightsController>().totalTrades;
+    final threshold = isPremium ? 10 : 5;
+
+    // Accept threshold-1 too since the stream may not have updated yet
+    if (totalTrades != threshold && totalTrades != threshold - 1) return;
+
+    final review = InAppReview.instance;
+    if (!await review.isAvailable()) return;
+
+    await review.requestReview();
+    await prefs.setBool('review_prompted', true);
   }
 }
 
